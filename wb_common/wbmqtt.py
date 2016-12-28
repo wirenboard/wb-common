@@ -182,6 +182,15 @@ class WBMQTT(object):
     def send_value(self, device_id, control_id, new_value, retain=False):
         self.client.publish("/devices/%s/controls/%s/on" % (device_id, control_id), new_value, retain=retain)
 
+    def send_and_wait_for_value(self, device_id, control_id, new_value, retain=False, poll_interval=10E-3):
+        """ Sends the value to control/on topic, 
+            then waits until control topic is updated by the corresponding 
+            driver to the new value"""
+        self.send_value(device_id, control_id, new_value, retain)
+
+        while self.get_last_or_next_value(device_id, control_id) != new_value:
+            time.sleep(poll_interval)
+
     def close(self):
         self.client.loop_stop()
 
