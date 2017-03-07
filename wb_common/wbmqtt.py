@@ -107,9 +107,18 @@ class WBMQTT(object):
     def clear_values(self):
         for cell_spec in self.control_values.itervalues():
             cell_spec.value = None
+            cell_spec.error = None
 
     def clear_value(self, device_id, control_id):
         self.control_values[(device_id, control_id)].value = None
+        self.control_values[(device_id, control_id)].error = None
+
+    def clear_device(self, device_id):
+        for cell_id, cell_spec in self.control_values.iteritems():
+            cell_device_id, cell_control_id = cell_id
+            if cell_device_id == device_id:
+                cell_spec.value = None
+                cell_spec.error = None
 
     def get_last_value(self, device_id, control_id):
         return self.control_values[(device_id, control_id)].value

@@ -1,3 +1,9 @@
+wb-common (1.3) stable; urgency=medium
+
+  * Add clear_device method, clear errors too on clear* 
+
+ -- Evgeny Boger <boger@contactless.ru>  Tue, 07 Mar 2017 19:46:22 +0300
+
 wb-common (1.2) stable; urgency=medium
 
   * update wbmqtt
