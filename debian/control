@@ -3,7 +3,7 @@ Maintainer: Evgeny Boger <boger@contactless.ru>
 Section: python
 Priority: optional
 XS-Python-Version: >= 2.7
-Build-Depends: python3, dh-python, python-setuptools (>= 0.6b3), python-all-dev (>= 2.6.6-3), debhelper (>= 7), python3-setuptools
+Build-Depends: python3, dh-python, python-setuptools (>= 0.6b3), python-dev (>= 2.6.6-3), debhelper (>= 7), python3-setuptools
 Standards-Version: 3.9.1
 X-Python-Version: >= 2.3
 X-Python3-Version: >= 3.2
