@@ -1,3 +1,4 @@
+from __future__ import print_function
 import re
 import os
 
@@ -28,5 +29,5 @@ def get_mmc_serial():
 
 
 if __name__ == '__main__':
-    print "/proc/cpuinfo serial: ", get_cpuinfo_serial()
+    print("/proc/cpuinfo serial: ", get_cpuinfo_serial())
     #print "WB serial (eth mac): ", get_mac()

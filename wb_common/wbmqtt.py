@@ -1,4 +1,5 @@
 #!/usr/bin/python
+from __future__ import print_function
 import mosquitto
 import time
 
@@ -19,8 +20,8 @@ def timing(f):
         ts = time.time()
         result = f(*args, **kw)
         te = time.time()
-        print 'func:%r args:[%r, %r] took: %2.4f sec' % \
-          (f.__name__, args, kw, te-ts)
+        print('func:%r args:[%r, %r] took: %2.4f sec' % \
+          (f.__name__, args, kw, te-ts))
         return result
     return wrap
 
@@ -105,7 +106,7 @@ class WBMQTT(object):
 
         # print "on msg", msg.topic, msg.payload, "took %d ms" % ((time.time() - st)*1000)
     def clear_values(self):
-        for cell_spec in self.control_values.itervalues():
+        for cell_spec in self.control_values.values():
             cell_spec.value = None
             cell_spec.error = None
 
@@ -114,7 +115,7 @@ class WBMQTT(object):
         self.control_values[(device_id, control_id)].error = None
 
     def clear_device(self, device_id):
-        for cell_id, cell_spec in self.control_values.iteritems():
+        for cell_id, cell_spec in self.control_values.items():
             cell_device_id, cell_control_id = cell_id
             if cell_device_id == device_id:
                 cell_spec.value = None
@@ -209,5 +210,5 @@ class WBMQTT(object):
 if __name__ == '__main__':
 
     time.sleep(1)
-    print wbmqtt.get_last_value('wb-adc', 'A1')
+    print(wbmqtt.get_last_value('wb-adc', 'A1'))
     wbmqtt.close()

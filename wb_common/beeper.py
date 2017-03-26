@@ -20,7 +20,7 @@ class Beeper(object):
         open(self.pwm_dir + '/enable', 'w').write(('1' if enabled else '0') + '\n')
 
     def beep(self, duration, repeat=1):
-        for i in xrange(repeat):
+        for i in range(repeat):
             if i != 0:
                 time.sleep(duration)
             self.set(1)

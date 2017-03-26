@@ -36,7 +36,7 @@ class ADC(object):
 
     def read_phys_ch_value(self, channel):
         values = []
-        for i in xrange(self.N_SAMPLES):
+        for i in range(self.N_SAMPLES):
             v = int(open('/sys/bus/iio/devices/iio:device0/in_voltage%d_raw' % channel).read())
             values.append(v)
             #~ time.sleep(20)
