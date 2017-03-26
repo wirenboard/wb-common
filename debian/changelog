@@ -1,3 +1,10 @@
+wb-common (1.3.1) stable; urgency=medium
+
+  * leds: fix set_brightness
+  * build python3 package
+
+ -- Evgeny Boger <boger@contactless.ru>  Sun, 26 Mar 2017 20:02:15 +0300
+
 wb-common (1.3) stable; urgency=medium
 
   * Add clear_device method, clear errors too on clear* 
