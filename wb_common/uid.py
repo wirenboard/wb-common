@@ -27,19 +27,16 @@ def get_mmc_serial():
                     return serial
     return None
 
-def get_eeprom_serial(num = 0):
-    if num == 0:
-        eeprom = "4-0057"
-    elif num == 1:
-        eeprom = "5-0057"
-    eeprom = "/sys/bus/i2c/devices/" + eeprom + "/eeprom"
+def get_eth_mac(num = 0):
+    netdev_path = os.path.realpath("/sys/class/net/eth" + str(num))
+    of_node_path = os.path.realpath(netdev_path + "/../../of_node")
 
-    if os.path.exists(eeprom):
-        mac = bytearray(open(eeprom).read(256)[250:])
+    mac_path = of_node_path + "/local-mac-address"
+    if os.path.exists(mac_path):
+        mac = bytearray(open(mac_path).read(6))
         return ''.join(map(lambda b: format(b, "02x"), mac))
 
     return None
-
 
 if __name__ == '__main__':
     print("/proc/cpuinfo serial: ", get_cpuinfo_serial())
