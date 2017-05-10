@@ -1,3 +1,9 @@
+wb-common (1.3.2) stable; urgency=medium
+
+  * uid: add get_eeprom_serial
+
+ -- Alexey Ignatov <lexszero@gmail.com>  Sat, 22 Apr 2017 08:03:02 +0300
+
 wb-common (1.3.1) stable; urgency=medium
 
   * leds: fix set_brightness

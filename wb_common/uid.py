@@ -27,6 +27,21 @@ def get_mmc_serial():
                     return serial
     return None
 
+def get_eth_mac(num = 0):
+    netdev_path = os.path.realpath("/sys/class/net/eth" + str(num))
+    of_node_path = os.path.realpath(netdev_path + "/../../of_node")
+
+    mac_path = of_node_path + "/local-mac-address"
+    if os.path.exists(mac_path):
+        mac = bytearray(open(mac_path).read(6))
+
+        # Check if default address was set by U-Boot (no EEPROM and unprogrammed OTP)
+        if mac[:3] == bytearray([0x00, 0x04, 0x00]):
+            return None
+
+        return ''.join(map(lambda b: format(b, "02x"), mac))
+
+    return None
 
 if __name__ == '__main__':
     print("/proc/cpuinfo serial: ", get_cpuinfo_serial())
