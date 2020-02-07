@@ -37,17 +37,22 @@ class MQTTConnection(mosquitto.Mosquitto):
 
 class WBMQTT(object):
     """
-    Will produce only one object
-    and return links to it at next object creations
+    A factory of singletons.
+    Each subclass will be a singleton
     """
+    __subclasses = {}
     __has_instances = False
 
-    def __new__(cls):
-        if not hasattr(cls, 'instance'):
-            cls.instance = super(WBMQTT, cls).__new__(cls)
+    HOST = 'localhost'
+    PORT = 1883
+
+    def __new__(cls, *args, **kwargs):
+        if cls not in cls.__subclasses:
+            cls.__subclasses[cls] = super(WBMQTT, cls).__new__(cls)
+            cls.__has_instances = False
         else:
             cls.__has_instances = True
-        return cls.instance
+        return cls.__subclasses[cls]
 
     def __init__(self):
         """
@@ -57,18 +62,23 @@ class WBMQTT(object):
             self.control_values = defaultdict(lambda: CellSpec())
 
             self.client = MQTTConnection()
+            self.client.connect(self.HOST, self.PORT)
+            self.client.on_message = self.on_mqtt_message
+            self.client.loop_start()
 
             self.device_subscriptions = set()
             self.channel_subscriptions = set()
 
+            atexit.register(self.close)
+
             # self.client.subscribe(VALUES_MASK)
             # self.client.subscribe(ERRORS_MASK)
 
-    def connect(self, host='localhost', port=1883):
-        self.client.disconnect()
-        self.client.connect(host, port)
-        self.client.on_message = self.on_mqtt_message
-        self.client.loop_start()
+    def close(self):
+        if self.__has_instances:
+            self.client.loop_stop()
+            self.client.disconnect()
+        self.__has_instances = False
 
     @staticmethod
     def _get_channel_topic(device_id, control_id):
@@ -172,8 +182,7 @@ class WBMQTT(object):
             if value is not None:
                 return value
             if (time.time() - ts_start) > timeout:
-                self.control_values[(device_id, control_id)
-                                    ].value = cached_value
+                self.control_values[(device_id, control_id)].value = cached_value
                 return
 
             time.sleep(0.01)
@@ -224,17 +233,11 @@ class WBMQTT(object):
         while self.get_last_or_next_value(device_id, control_id) != new_value:
             time.sleep(poll_interval)
 
-    def close(self):
-        self.client.loop_stop()
-        self.client.disconnect()
-
 
 """
 Initiallizing wbmqtt to call directly from imported modules
 example:
-    from wb_common.wbmqtt import mqtt
-    mqtt.watch_device(<device>)
+    from wb_common.wbmqtt import wbmqtt
+    wbmqtt.watch_device(<device>)
 """
-mqtt = WBMQTT()
-mqtt.connect()
-atexit.register(mqtt.close)
+wbmqtt = WBMQTT()
