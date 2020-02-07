@@ -1,7 +1,9 @@
 #!/usr/bin/python
 from __future__ import print_function
+from functools import wraps
 import mosquitto
 import time
+import atexit
 
 from collections import defaultdict
 import logging
@@ -10,28 +12,23 @@ VALUES_MASK = "/devices/+/controls/+"
 ERRORS_MASK = "/devices/+/controls/+/meta/error"
 
 
-
-
-from functools import wraps
-
 def timing(f):
     @wraps(f)
     def wrap(*args, **kw):
         ts = time.time()
         result = f(*args, **kw)
         te = time.time()
-        print('func:%r args:[%r, %r] took: %2.4f sec' % \
-          (f.__name__, args, kw, te-ts))
+        print('func:%r args:[%r, %r] took: %2.4f sec' %
+              (f.__name__, args, kw, te-ts))
         return result
     return wrap
 
 
-
-
 class CellSpec(object):
-    def __init__(self, value = None, error = None):
+    def __init__(self, value=None, error=None):
         self.value = value
         self.error = error
+
 
 class MQTTConnection(mosquitto.Mosquitto):
     def loop_forever(self, timeout=1.0, max_packets=1):
@@ -39,19 +36,39 @@ class MQTTConnection(mosquitto.Mosquitto):
 
 
 class WBMQTT(object):
-    def __init__(self):
-        self.control_values = defaultdict(lambda: CellSpec())
+    """
+    Will produce only one object
+    and return links to it at next object creations
+    """
+    __has_instances = False
 
-        self.client = MQTTConnection()
-        self.client.connect('localhost', 1883)
+    def __new__(cls):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(WBMQTT, cls).__new__(cls)
+        else:
+            cls.__has_instances = True
+        return cls.instance
+
+    def __init__(self):
+        """
+        Will be called only once at instance creation
+        """
+        if not self.__has_instances:
+            self.control_values = defaultdict(lambda: CellSpec())
+
+            self.client = MQTTConnection()
+
+            self.device_subscriptions = set()
+            self.channel_subscriptions = set()
+
+            # self.client.subscribe(VALUES_MASK)
+            # self.client.subscribe(ERRORS_MASK)
+
+    def connect(self, host='localhost', port=1883):
+        self.client.disconnect()
+        self.client.connect(host, port)
         self.client.on_message = self.on_mqtt_message
         self.client.loop_start()
-
-        self.device_subscriptions = set()
-        self.channel_subscriptions = set()
-
-        # self.client.subscribe(VALUES_MASK)
-        # self.client.subscribe(ERRORS_MASK)
 
     @staticmethod
     def _get_channel_topic(device_id, control_id):
@@ -100,9 +117,11 @@ class WBMQTT(object):
         #     return
 
         if mosquitto.topic_matches_sub(VALUES_MASK, msg.topic):
-            self.control_values[self._get_channel(msg.topic)].value = msg.payload
+            self.control_values[self._get_channel(
+                msg.topic)].value = msg.payload
         elif mosquitto.topic_matches_sub(ERRORS_MASK, msg.topic):
-            self.control_values[self._get_channel(msg.topic)].error = msg.payload or None
+            self.control_values[self._get_channel(
+                msg.topic)].error = msg.payload or None
 
         # print "on msg", msg.topic, msg.payload, "took %d ms" % ((time.time() - st)*1000)
     def clear_values(self):
@@ -131,6 +150,7 @@ class WBMQTT(object):
         else:
             return self.get_next_value(device_id, control_id)
     # @timing
+
     def get_next_or_last_value(self, device_id, control_id, timeout=0.5):
         """ wait for timeout for new value, return old one otherwise"""
         val = self.get_next_value(device_id, control_id, timeout=timeout)
@@ -152,12 +172,13 @@ class WBMQTT(object):
             if value is not None:
                 return value
             if (time.time() - ts_start) > timeout:
-                self.control_values[(device_id, control_id)].value = cached_value
+                self.control_values[(device_id, control_id)
+                                    ].value = cached_value
                 return
 
             time.sleep(0.01)
 
-    def get_stable_value(self, device_id, control_id, timeout=30, jitter=10): 
+    def get_stable_value(self, device_id, control_id, timeout=30, jitter=10):
         start = time.time()
         last_val = None
         while time.time() - start < timeout:
@@ -180,7 +201,8 @@ class WBMQTT(object):
                 try:
                     val_sum += float(val)
                 except ValueError:
-                    logging.warning("cannot convert %s to float while calculating average" % val)
+                    logging.warning(
+                        "cannot convert %s to float while calculating average" % val)
                     continue
                 else:
                     val_count += 1
@@ -190,7 +212,8 @@ class WBMQTT(object):
             return None
 
     def send_value(self, device_id, control_id, new_value, retain=False):
-        self.client.publish("/devices/%s/controls/%s/on" % (device_id, control_id), new_value, retain=retain)
+        self.client.publish("/devices/%s/controls/%s/on" %
+                            (device_id, control_id), new_value, retain=retain)
 
     def send_and_wait_for_value(self, device_id, control_id, new_value, retain=False, poll_interval=10E-3):
         """ Sends the value to control/on topic, 
@@ -203,12 +226,15 @@ class WBMQTT(object):
 
     def close(self):
         self.client.loop_stop()
+        self.client.disconnect()
 
-    def __del__(self):
-        self.close()
 
-if __name__ == '__main__':
-
-    time.sleep(1)
-    print(wbmqtt.get_last_value('wb-adc', 'A1'))
-    wbmqtt.close()
+"""
+Initiallizing wbmqtt to call directly from imported modules
+example:
+    from wb_common.wbmqtt import mqtt
+    mqtt.watch_device(<device>)
+"""
+mqtt = WBMQTT()
+mqtt.connect()
+atexit.register(mqtt.close)
