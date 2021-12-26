@@ -1,6 +1,7 @@
 from __future__ import print_function
 import re
 import os
+import subprocess
 
 # get_mac() has been moved to test_suite, because it uses wb-gen-serial,
 # which depends on this (wb-common) package (avoid circular dependency)
@@ -12,6 +13,19 @@ def get_cpuinfo_serial():
     if len(matches) > 0:
         return matches[0]
     return None
+
+
+def _devmem(address):
+    r = subprocess.check_output('busybox devmem 0x{:x} 32'.format(address), shell=True)
+    return int(r, 16)
+
+
+def get_wb7_cpu_serial():
+    r3 = _devmem(0x1c1b20c)
+    r2 = _devmem(0x1c1b208)
+    r1 = _devmem(0x1c1b204)
+
+    return format(r3, '08x') + format(r2, '08x') + format((r1 >> 16) & 0xFFFF, '04x')
 
 
 def get_mmc_serial():
