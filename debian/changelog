@@ -1,3 +1,9 @@
+wb-common (1.5.0) stable; urgency=medium
+
+  * wb_common.wbmqtt is mosquitto/paho-mqtt compatible
+
+ -- Vladimir Romanov <v.romanov@wirenboard.ru>  Wed, 10 Aug 2022 13:49:54 +0300
+
 wb-common (1.4.0) stable; urgency=medium
 
   * add procedure to read WB7 serial from /dev/mem
@@ -25,7 +31,7 @@ wb-common (1.3.1) stable; urgency=medium
 
 wb-common (1.3) stable; urgency=medium
 
-  * Add clear_device method, clear errors too on clear* 
+  * Add clear_device method, clear errors too on clear*
 
  -- Evgeny Boger <boger@contactless.ru>  Tue, 07 Mar 2017 19:46:22 +0300
 

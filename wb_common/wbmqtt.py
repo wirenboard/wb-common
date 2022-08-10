@@ -1,18 +1,21 @@
 #!/usr/bin/python
 from __future__ import print_function
-import mosquitto
 import time
-
 from collections import defaultdict
+from functools import wraps
 import logging
+
+try:
+    import mosquitto as mqtt
+    import mosquitto.Mosquitto as mqttc
+except ImportError:  # paho-mqtt has slightly different (from mosquitto) api
+    import paho.mqtt.client as mqtt
+    mqttc = mqtt.Client
+
 
 VALUES_MASK = "/devices/+/controls/+"
 ERRORS_MASK = "/devices/+/controls/+/meta/error"
 
-
-
-
-from functools import wraps
 
 def timing(f):
     @wraps(f)
@@ -33,16 +36,17 @@ class CellSpec(object):
         self.value = value
         self.error = error
 
-class MQTTConnection(mosquitto.Mosquitto):
-    def loop_forever(self, timeout=1.0, max_packets=1):
-        mosquitto.Mosquitto.loop_forever(self, timeout=0.05)
+
+class MQTTConnection(mqttc):
+    def loop_forever(self, *args, **kwargs):
+        mqttc.loop_forever(self, timeout=0.05)
 
 
 class WBMQTT(object):
     def __init__(self):
         self.control_values = defaultdict(lambda: CellSpec())
 
-        self.client = MQTTConnection()
+        self.client = MQTTConnection("wb-common.wbmqtt")
         self.client.connect('localhost', 1883)
         self.client.on_message = self.on_mqtt_message
         self.client.loop_start()
@@ -99,9 +103,9 @@ class WBMQTT(object):
         # if msg.retain:
         #     return
 
-        if mosquitto.topic_matches_sub(VALUES_MASK, msg.topic):
+        if mqtt.topic_matches_sub(VALUES_MASK, msg.topic):
             self.control_values[self._get_channel(msg.topic)].value = msg.payload
-        elif mosquitto.topic_matches_sub(ERRORS_MASK, msg.topic):
+        elif mqtt.topic_matches_sub(ERRORS_MASK, msg.topic):
             self.control_values[self._get_channel(msg.topic)].error = msg.payload or None
 
         # print "on msg", msg.topic, msg.payload, "took %d ms" % ((time.time() - st)*1000)
@@ -157,7 +161,7 @@ class WBMQTT(object):
 
             time.sleep(0.01)
 
-    def get_stable_value(self, device_id, control_id, timeout=30, jitter=10): 
+    def get_stable_value(self, device_id, control_id, timeout=30, jitter=10):
         start = time.time()
         last_val = None
         while time.time() - start < timeout:
@@ -193,8 +197,8 @@ class WBMQTT(object):
         self.client.publish("/devices/%s/controls/%s/on" % (device_id, control_id), new_value, retain=retain)
 
     def send_and_wait_for_value(self, device_id, control_id, new_value, retain=False, poll_interval=10E-3):
-        """ Sends the value to control/on topic, 
-            then waits until control topic is updated by the corresponding 
+        """ Sends the value to control/on topic,
+            then waits until control topic is updated by the corresponding
             driver to the new value"""
         self.send_value(device_id, control_id, new_value, retain)
 
