@@ -4,10 +4,11 @@ import time
 from collections import defaultdict
 from functools import wraps
 import logging
+import six
 
 try:
     import mosquitto as mqtt
-    import mosquitto.Mosquitto as mqttc
+    from mosquitto import Mosquitto as mqttc
 except ImportError:  # paho-mqtt has slightly different (from mosquitto) api
     import paho.mqtt.client as mqtt
     mqttc = mqtt.Client
@@ -103,10 +104,14 @@ class WBMQTT(object):
         # if msg.retain:
         #     return
 
+        ret = msg.payload
+        if isinstance(ret, six.binary_type):
+            ret = ret.decode("utf-8")
+
         if mqtt.topic_matches_sub(VALUES_MASK, msg.topic):
-            self.control_values[self._get_channel(msg.topic)].value = msg.payload
+            self.control_values[self._get_channel(msg.topic)].value = ret
         elif mqtt.topic_matches_sub(ERRORS_MASK, msg.topic):
-            self.control_values[self._get_channel(msg.topic)].error = msg.payload or None
+            self.control_values[self._get_channel(msg.topic)].error = ret or None
 
         # print "on msg", msg.topic, msg.payload, "took %d ms" % ((time.time() - st)*1000)
     def clear_values(self):

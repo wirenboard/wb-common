@@ -1,6 +1,7 @@
 wb-common (1.5.0) stable; urgency=medium
 
-  * wb_common.wbmqtt is mosquitto/paho-mqtt compatible
+  * wbmqtt: mosquitto/paho-mqtt compatible
+  * wbmqtt: fix py2/3 compatibility
 
  -- Vladimir Romanov <v.romanov@wirenboard.ru>  Wed, 10 Aug 2022 13:49:54 +0300
 
