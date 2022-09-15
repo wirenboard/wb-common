@@ -1,3 +1,10 @@
+wb-common (2.0.0) stable; urgency=medium
+
+  * remove python2 package
+  * uid: better python3 support
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Thu, 15 Sep 2022 16:26:50 +0300
+
 wb-common (1.4.0) stable; urgency=medium
 
   * add procedure to read WB7 serial from /dev/mem
