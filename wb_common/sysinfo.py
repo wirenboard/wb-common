@@ -1,4 +1,5 @@
 from __future__ import print_function
+
 import os
 
 
@@ -10,4 +11,4 @@ def get_fw_version():
 
 
 def get_wb_version():
-    return os.environ['WB_VERSION']
+    return os.environ["WB_VERSION"]

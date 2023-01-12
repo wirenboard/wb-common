@@ -1,11 +1,12 @@
 # coding: utf-8
 from __future__ import print_function
+
 import os
 import subprocess
 
 
 def gsm_decode(hexstr):
-    return os.popen('echo %s | xxd -r -ps | iconv -f=UTF-16BE -t=UTF-8' % hexstr).read()
+    return os.popen("echo %s | xxd -r -ps | iconv -f=UTF-16BE -t=UTF-8" % hexstr).read()
 
 
 def init_gsm():
@@ -13,10 +14,12 @@ def init_gsm():
     if retcode != 0:
         raise RuntimeError("gsm init failed")
 
+
 def init_baudrate():
     retcode = subprocess.call("wb-gsm init_baud", shell=True)
     if retcode != 0:
         raise RuntimeError("gsm init baudrate failed")
+
 
 def gsm_get_imei():
     proc = subprocess.Popen("wb-gsm imei", shell=True, stdout=subprocess.PIPE)
@@ -25,6 +28,7 @@ def gsm_get_imei():
         raise RuntimeError("get imei failed")
 
     return stdout.strip()
+
 
 def split_imei(imei):
     imei = str(imei)

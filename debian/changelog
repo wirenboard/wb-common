@@ -1,3 +1,9 @@
+wb-common (2.0.1) stable; urgency=medium
+
+  * Fix formatting
+
+ -- Nikolay Korotkiy <nikolay.korotkiy@wirenboard.com>  Thu, 12 Jan 2023 16:50:00 +0400
+
 wb-common (2.0.0) stable; urgency=medium
 
   * remove python2 package

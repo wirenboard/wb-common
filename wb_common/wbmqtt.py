@@ -1,18 +1,18 @@
 #!/usr/bin/python
 from __future__ import print_function
-import mosquitto
-import time
 
-from collections import defaultdict
 import logging
+import time
+from collections import defaultdict
+
+import mosquitto
 
 VALUES_MASK = "/devices/+/controls/+"
 ERRORS_MASK = "/devices/+/controls/+/meta/error"
 
 
-
-
 from functools import wraps
+
 
 def timing(f):
     @wraps(f)
@@ -20,18 +20,17 @@ def timing(f):
         ts = time.time()
         result = f(*args, **kw)
         te = time.time()
-        print('func:%r args:[%r, %r] took: %2.4f sec' % \
-          (f.__name__, args, kw, te-ts))
+        print("func:%r args:[%r, %r] took: %2.4f sec" % (f.__name__, args, kw, te - ts))
         return result
+
     return wrap
 
 
-
-
 class CellSpec(object):
-    def __init__(self, value = None, error = None):
+    def __init__(self, value=None, error=None):
         self.value = value
         self.error = error
+
 
 class MQTTConnection(mosquitto.Mosquitto):
     def loop_forever(self, timeout=1.0, max_packets=1):
@@ -43,7 +42,7 @@ class WBMQTT(object):
         self.control_values = defaultdict(lambda: CellSpec())
 
         self.client = MQTTConnection()
-        self.client.connect('localhost', 1883)
+        self.client.connect("localhost", 1883)
         self.client.on_message = self.on_mqtt_message
         self.client.loop_start()
 
@@ -55,15 +54,15 @@ class WBMQTT(object):
 
     @staticmethod
     def _get_channel_topic(device_id, control_id):
-        return '/devices/%s/controls/%s' % (device_id, control_id)
+        return "/devices/%s/controls/%s" % (device_id, control_id)
 
     def watch_device(self, device_id):
         if device_id in self.device_subscriptions:
             return
         else:
-            topic = self._get_channel_topic(device_id, '+')
+            topic = self._get_channel_topic(device_id, "+")
             self.client.subscribe(topic)
-            self.client.subscribe(topic + '/meta/error')
+            self.client.subscribe(topic + "/meta/error")
             self.device_subscriptions.add(device_id)
 
     def watch_channel(self, device_id, control_id):
@@ -74,17 +73,17 @@ class WBMQTT(object):
 
         topic = self._get_channel_topic(device_id, control_id)
         self.client.subscribe(topic)
-        self.client.subscribe(topic + '/meta/error')
+        self.client.subscribe(topic + "/meta/error")
         self.channel_subscriptions.add((device_id, control_id))
 
     def unwatch_channel(self, device_id, control_id):
         topic = self._get_channel_topic(device_id, control_id)
         self.client.unsubscribe(topic)
-        self.client.unsubscribe(topic + '/meta/error')
+        self.client.unsubscribe(topic + "/meta/error")
 
     @staticmethod
     def _get_channel(topic):
-        parts = topic.split('/')
+        parts = topic.split("/")
         device_id = parts[2]
         control_id = parts[4]
         return device_id, control_id
@@ -105,6 +104,7 @@ class WBMQTT(object):
             self.control_values[self._get_channel(msg.topic)].error = msg.payload or None
 
         # print "on msg", msg.topic, msg.payload, "took %d ms" % ((time.time() - st)*1000)
+
     def clear_values(self):
         for cell_spec in self.control_values.values():
             cell_spec.value = None
@@ -130,9 +130,10 @@ class WBMQTT(object):
             return val
         else:
             return self.get_next_value(device_id, control_id)
+
     # @timing
     def get_next_or_last_value(self, device_id, control_id, timeout=0.5):
-        """ wait for timeout for new value, return old one otherwise"""
+        """wait for timeout for new value, return old one otherwise"""
         val = self.get_next_value(device_id, control_id, timeout=timeout)
         if val is None:
             val = self.get_last_value(device_id, control_id)
@@ -157,7 +158,7 @@ class WBMQTT(object):
 
             time.sleep(0.01)
 
-    def get_stable_value(self, device_id, control_id, timeout=30, jitter=10): 
+    def get_stable_value(self, device_id, control_id, timeout=30, jitter=10):
         start = time.time()
         last_val = None
         while time.time() - start < timeout:
@@ -192,10 +193,10 @@ class WBMQTT(object):
     def send_value(self, device_id, control_id, new_value, retain=False):
         self.client.publish("/devices/%s/controls/%s/on" % (device_id, control_id), new_value, retain=retain)
 
-    def send_and_wait_for_value(self, device_id, control_id, new_value, retain=False, poll_interval=10E-3):
-        """ Sends the value to control/on topic, 
-            then waits until control topic is updated by the corresponding 
-            driver to the new value"""
+    def send_and_wait_for_value(self, device_id, control_id, new_value, retain=False, poll_interval=10e-3):
+        """Sends the value to control/on topic,
+        then waits until control topic is updated by the corresponding
+        driver to the new value"""
         self.send_value(device_id, control_id, new_value, retain)
 
         while self.get_last_or_next_value(device_id, control_id) != new_value:
@@ -207,8 +208,9 @@ class WBMQTT(object):
     def __del__(self):
         self.close()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
 
     time.sleep(1)
-    print(wbmqtt.get_last_value('wb-adc', 'A1'))
+    print(wbmqtt.get_last_value("wb-adc", "A1"))
     wbmqtt.close()
