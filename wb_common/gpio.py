@@ -1,9 +1,10 @@
 from __future__ import print_function
-from six import iteritems
 
-import threading
 import select
+import threading
 from collections import defaultdict
+
+from six import iteritems
 
 
 class GPIOHandler(object):
@@ -36,7 +37,7 @@ class GPIOHandler(object):
                 for gpio, fd in iteritems(self.gpio_fds):
                     if fileno == fd.fileno():
                         if self.gpio_first_event_fired[gpio]:
-                            #~ print "fire callback"
+                            # ~ print "fire callback"
                             cb = self.event_callbacks.get(gpio)
                             if cb is not None:
                                 cb(gpio)
@@ -44,17 +45,17 @@ class GPIOHandler(object):
                             self.gpio_first_event_fired[gpio] = True
 
     def export(self, gpio):
-        open('/sys/class/gpio/export', 'wt').write("%d\n" % gpio)
+        open("/sys/class/gpio/export", "wt").write("%d\n" % gpio)
 
     def unexport(self, gpio):
-        open('/sys/class/gpio/unexport', 'wt').write("%d\n" % gpio)
+        open("/sys/class/gpio/unexport", "wt").write("%d\n" % gpio)
 
     def setup(self, gpio, direction):
         self.export(gpio)
-        open('/sys/class/gpio/gpio%d/direction' % gpio, 'wt').write("%s\n" % direction)
+        open("/sys/class/gpio/gpio%d/direction" % gpio, "wt").write("%s\n" % direction)
 
     def _open(self, gpio):
-        fd = open('/sys/class/gpio/gpio%d/value' % gpio, 'r+')
+        fd = open("/sys/class/gpio/gpio%d/value" % gpio, "r+")
         self.gpio_fds[gpio] = fd
 
     def _check_open(self, gpio):
@@ -65,7 +66,7 @@ class GPIOHandler(object):
         self._check_open(gpio)
 
         self.gpio_fds[gpio].seek(0)
-        self.gpio_fds[gpio].write('1' if value else '0')
+        self.gpio_fds[gpio].write("1" if value else "0")
         self.gpio_fds[gpio].flush()
 
     def input(self, gpio):
@@ -73,16 +74,16 @@ class GPIOHandler(object):
 
         self.gpio_fds[gpio].seek(0)
         val = self.gpio_fds[gpio].read().strip()
-        return False if val == '0' else True
+        return False if val == "0" else True
 
     def request_gpio_interrupt(self, gpio, edge):
-        open('/sys/class/gpio/gpio%d/edge' % gpio, 'wt').write("%s\n" % edge)
+        open("/sys/class/gpio/gpio%d/edge" % gpio, "wt").write("%s\n" % edge)
         self._check_open(gpio)
 
     def add_event_detect(self, gpio, edge, callback):
         self.request_gpio_interrupt(gpio, edge)
 
-        already_present = (gpio in self.event_callbacks)
+        already_present = gpio in self.event_callbacks
         self.event_callbacks[gpio] = callback
         if not already_present:
             self.gpio_first_event_fired[gpio] = False
@@ -97,18 +98,20 @@ class GPIOHandler(object):
 
     def wait_for_edge(self, gpio, edge, timeout=None):
         if timeout is None:
-            timeout = 1E100
+            timeout = 1e100
 
         event = threading.Event()
         event.clear()
 
         self.add_event_detect(gpio, edge, lambda x: event.set())
-        #~ print "wait for edge..."
+        # ~ print "wait for edge..."
         ret = event.wait(timeout)
-        #~ print "wait for edge done"
+        # ~ print "wait for edge done"
         self.remove_event_detect(gpio)
 
         return ret
 
-    #~ self.irq_gpio, GPIO.RISING, callback=self.interruptHandler)
+    # ~ self.irq_gpio, GPIO.RISING, callback=self.interruptHandler)
+
+
 GPIO = GPIOHandler()
