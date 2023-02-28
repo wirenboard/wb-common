@@ -4,9 +4,11 @@ from urllib.parse import urlparse
 
 import paho_socket
 
+DEFAULT_BROKER_URL = "unix:///var/run/mosquitto/mosquitto.sock"
+
 
 class MQTTClient(paho_socket.Client):
-    def __init__(self, client_id_prefix: str, broker_url: str = "unix:///var/run/mosquitto/mosquitto.sock"):
+    def __init__(self, client_id_prefix: str, broker_url: str = DEFAULT_BROKER_URL):
         self._broker_url = urlparse(broker_url)
         client_id = self.generate_client_id(client_id_prefix)
         transport = "websockets" if self._broker_url.scheme == "ws" else "tcp"
