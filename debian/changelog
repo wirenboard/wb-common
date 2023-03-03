@@ -1,3 +1,9 @@
+wb-common (2.1.1) stable; urgency=medium
+
+  * mqtt_client: fix password authentication for websockets and unix socket connections
+
+ -- Nikolay Korotkiy <nikolay.korotkiy@wirenboard.com>  Fri, 03 Mar 2023 09:57:00 +0400
+
 wb-common (2.1.0) stable; urgency=medium
 
   * Add MQTT client wrapper

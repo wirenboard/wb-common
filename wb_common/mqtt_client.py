@@ -22,15 +22,16 @@ class MQTTClient(paho_socket.Client):
 
     def start(self) -> None:
         scheme = self._broker_url.scheme
+
+        if self._broker_url.username:
+            self.username_pw_set(self._broker_url.username, self._broker_url.password)
+
+        if scheme == "ws" and self._broker_url.path:
+            self.ws_set_options(self._broker_url.path)
+
         if scheme == "unix":
             self.sock_connect(self._broker_url.path)
-        elif scheme in ["mqtt-tcp", "tcp"]:
-            if self._broker_url.username:
-                self.username_pw_set(self._broker_url.username, self._broker_url.password)
-            self.connect(self._broker_url.hostname, self._broker_url.port)
-        elif scheme == "ws":
-            if self._broker_url.path:
-                self.ws_set_options(self._broker_url.path)
+        elif scheme in ["mqtt-tcp", "tcp", "ws"]:
             self.connect(self._broker_url.hostname, self._broker_url.port)
         else:
             raise Exception("Unkown mqtt url scheme: " + scheme)
