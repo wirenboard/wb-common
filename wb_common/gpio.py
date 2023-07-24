@@ -4,8 +4,6 @@ import select
 import threading
 from collections import defaultdict
 
-from six import iteritems
-
 
 class GPIOHandler(object):
     IN = "in"
@@ -34,7 +32,7 @@ class GPIOHandler(object):
         while True:
             events = self.epoll.poll()
             for fileno, event in events:
-                for gpio, fd in iteritems(self.gpio_fds):
+                for gpio, fd in self.gpio_fds.items():
                     if fileno == fd.fileno():
                         if self.gpio_first_event_fired[gpio]:
                             # ~ print "fire callback"
