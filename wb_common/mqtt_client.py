@@ -8,12 +8,19 @@ DEFAULT_BROKER_URL = "unix:///var/run/mosquitto/mosquitto.sock"
 
 
 class MQTTClient(paho_socket.Client):
-    def __init__(self, client_id_prefix: str, broker_url: str = DEFAULT_BROKER_URL, is_threaded: bool = True):
+    def __init__(
+        self,
+        client_id_prefix: str,
+        broker_url: str = DEFAULT_BROKER_URL,
+        is_threaded: bool = True,
+        *args,
+        **kwargs,
+    ):
         self._broker_url = urlparse(broker_url)
         self._is_threaded = is_threaded
-        client_id = self.generate_client_id(client_id_prefix)
-        transport = "websockets" if self._broker_url.scheme == "ws" else "tcp"
-        super().__init__(client_id=client_id, transport=transport)
+        kwargs["client_id"] = self.generate_client_id(client_id_prefix)
+        kwargs["transport"] = "websockets" if self._broker_url.scheme == "ws" else "tcp"
+        super().__init__(*args, **kwargs)
 
     @staticmethod
     def generate_client_id(client_id_prefix: str, suffix_length: int = 8) -> str:
@@ -34,7 +41,7 @@ class MQTTClient(paho_socket.Client):
         elif scheme in ["mqtt-tcp", "tcp", "ws"]:
             self.connect(self._broker_url.hostname, self._broker_url.port)
         else:
-            raise Exception("Unkown mqtt url scheme: " + scheme)
+            raise Exception("Unknown mqtt url scheme: " + scheme)
 
         if self._is_threaded:
             self.loop_start()
