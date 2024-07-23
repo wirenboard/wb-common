@@ -4,14 +4,12 @@ from __future__ import print_function
 import logging
 import time
 from collections import defaultdict
+from functools import wraps
 
 import mosquitto
 
 VALUES_MASK = "/devices/+/controls/+"
 ERRORS_MASK = "/devices/+/controls/+/meta/error"
-
-
-from functools import wraps
 
 
 def timing(f):
@@ -26,7 +24,7 @@ def timing(f):
     return wrap
 
 
-class CellSpec(object):
+class CellSpec:  # pylint: disable=too-few-public-methods
     def __init__(self, value=None, error=None):
         self.value = value
         self.error = error
@@ -37,9 +35,9 @@ class MQTTConnection(mosquitto.Mosquitto):
         mosquitto.Mosquitto.loop_forever(self, timeout=0.05)
 
 
-class WBMQTT(object):
+class WBMQTT:
     def __init__(self):
-        self.control_values = defaultdict(lambda: CellSpec())
+        self.control_values = defaultdict(CellSpec())
 
         self.client = MQTTConnection()
         self.client.connect("localhost", 1883)
@@ -54,16 +52,16 @@ class WBMQTT(object):
 
     @staticmethod
     def _get_channel_topic(device_id, control_id):
-        return "/devices/%s/controls/%s" % (device_id, control_id)
+        return f"/devices/{device_id}/controls/{control_id}"
 
     def watch_device(self, device_id):
         if device_id in self.device_subscriptions:
             return
-        else:
-            topic = self._get_channel_topic(device_id, "+")
-            self.client.subscribe(topic)
-            self.client.subscribe(topic + "/meta/error")
-            self.device_subscriptions.add(device_id)
+
+        topic = self._get_channel_topic(device_id, "+")
+        self.client.subscribe(topic)
+        self.client.subscribe(f"{topic}/meta/error")
+        self.device_subscriptions.add(device_id)
 
     def watch_channel(self, device_id, control_id):
         if device_id in self.device_subscriptions:
@@ -73,13 +71,13 @@ class WBMQTT(object):
 
         topic = self._get_channel_topic(device_id, control_id)
         self.client.subscribe(topic)
-        self.client.subscribe(topic + "/meta/error")
+        self.client.subscribe(f"{topic}/meta/error")
         self.channel_subscriptions.add((device_id, control_id))
 
     def unwatch_channel(self, device_id, control_id):
         topic = self._get_channel_topic(device_id, control_id)
         self.client.unsubscribe(topic)
-        self.client.unsubscribe(topic + "/meta/error")
+        self.client.unsubscribe(f"{topic}/meta/error")
 
     @staticmethod
     def _get_channel(topic):
@@ -90,11 +88,11 @@ class WBMQTT(object):
 
     # @timing
     def on_mqtt_message(self, arg0, arg1, arg2=None):
-        st = time.time()
+        # st = time.time()
         if arg2 is None:
-            mosq, obj, msg = None, arg0, arg1
+            _mosq, _obj, msg = None, arg0, arg1
         else:
-            mosq, obj, msg = arg0, arg1, arg2
+            _mosq, _obj, msg = arg0, arg1, arg2
         # if msg.retain:
         #     return
 
@@ -116,7 +114,7 @@ class WBMQTT(object):
 
     def clear_device(self, device_id):
         for cell_id, cell_spec in self.control_values.items():
-            cell_device_id, cell_control_id = cell_id
+            cell_device_id, _cell_control_id = cell_id
             if cell_device_id == device_id:
                 cell_spec.value = None
                 cell_spec.error = None
@@ -128,8 +126,8 @@ class WBMQTT(object):
         val = self.get_last_value(device_id, control_id)
         if val is not None:
             return val
-        else:
-            return self.get_next_value(device_id, control_id)
+
+        return self.get_next_value(device_id, control_id)
 
     # @timing
     def get_next_or_last_value(self, device_id, control_id, timeout=0.5):
@@ -181,17 +179,17 @@ class WBMQTT(object):
                 try:
                     val_sum += float(val)
                 except ValueError:
-                    logging.warning("cannot convert %s to float while calculating average" % val)
+                    logging.warning("cannot convert %s to float while calculating average", val)
                     continue
                 else:
                     val_count += 1
         if val_count > 0:
             return val_sum / val_count
-        else:
-            return None
+
+        return None
 
     def send_value(self, device_id, control_id, new_value, retain=False):
-        self.client.publish("/devices/%s/controls/%s/on" % (device_id, control_id), new_value, retain=retain)
+        self.client.publish(f"/devices/{device_id}/controls/{control_id}/on", new_value, retain=retain)
 
     def send_and_wait_for_value(self, device_id, control_id, new_value, retain=False, poll_interval=10e-3):
         """Sends the value to control/on topic,
@@ -210,7 +208,7 @@ class WBMQTT(object):
 
 
 if __name__ == "__main__":
-
     time.sleep(1)
+    wbmqtt = WBMQTT()
     print(wbmqtt.get_last_value("wb-adc", "A1"))
     wbmqtt.close()
