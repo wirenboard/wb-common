@@ -6,7 +6,7 @@ import subprocess
 import threading
 
 
-class CanPort(object):
+class CanPort:
     def __init__(self, iface="can0", bitrate=115200):
         self.iface = iface
         self.bitrate = bitrate
@@ -14,22 +14,24 @@ class CanPort(object):
         self.receive_ready = threading.Event()
         self.receive_thread = None
 
+        self._frames = None
+
     def setup(self):
         # re-initialize iface
-        subprocess.call("ifconfig %s down" % self.iface, shell=True)
-        subprocess.call("ip link set %s type can bitrate 125000" % self.iface, shell=True)
-        subprocess.call("ifconfig %s up" % self.iface, shell=True)
+        subprocess.call(f"ifconfig {self.iface} down", shell=True)
+        subprocess.call(f"ip link set {self.iface} type can bitrate 125000", shell=True)
+        subprocess.call(f"ifconfig {self.iface} up", shell=True)
 
     def send(self, addr, data):
         addr_str = hex(addr)[2:][:3].zfill(3)
         data_str = binascii.hexlify(data)
-        subprocess.call("cansend %s %s#%s" % (self.iface, addr_str, data_str), shell=True)
+        subprocess.call(f"cansend {self.iface} {addr_str}#{data_str}", shell=True)
 
     def receive(self, timeout_ms=1000):
         proc = subprocess.Popen(
-            "candump  %s -s0 -L -T %s" % (self.iface, timeout_ms), shell=True, stdout=subprocess.PIPE
+            f"candump {self.iface} -s0 -L -T {timeout_ms}", shell=True, stdout=subprocess.PIPE
         )
-        stdout, stderr = proc.communicate()
+        stdout, _stderr = proc.communicate()
         if proc.returncode != 0:
             raise RuntimeError("candump failed")
 
@@ -40,7 +42,7 @@ class CanPort(object):
             if line:
                 parts = line.split(" ")
                 if len(parts) == 3:
-                    ts, iface, packet = parts
+                    packet = parts[2]
                     addr_str, data_str = packet.split("#")
                     addr = int(addr_str, 16)
                     data = binascii.unhexlify(data_str)

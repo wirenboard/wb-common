@@ -25,7 +25,7 @@ class MQTTClient(paho_socket.Client):
     @staticmethod
     def generate_client_id(client_id_prefix: str, suffix_length: int = 8) -> str:
         random_suffix = "".join(random.sample(string.ascii_letters + string.digits, suffix_length))
-        return "%s-%s" % (client_id_prefix, random_suffix)
+        return f"{client_id_prefix}-{random_suffix}"
 
     def start(self) -> None:
         scheme = self._broker_url.scheme

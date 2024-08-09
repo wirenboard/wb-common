@@ -9,14 +9,14 @@ import subprocess
 def get_cpuinfo_serial():
     with open("/proc/cpuinfo", encoding="utf-8") as f:
         data = f.read()
-    matches = re.findall("^Serial\s+: ([0-9a-f]+)$", data, re.M)
+    matches = re.findall(r"^Serial\s+: ([0-9a-f]+)$", data, re.M)
     if len(matches) > 0:
         return matches[0]
     return None
 
 
 def _devmem(address):
-    r = subprocess.check_output("busybox devmem 0x{:x} 32".format(address), shell=True)
+    r = subprocess.check_output(f"busybox devmem 0x{address:x} 32", shell=True)
     return int(r, 16)
 
 
@@ -44,7 +44,7 @@ def get_mmc_serial():
 
 
 def get_eth_mac(num=0):
-    netdev_path = os.path.realpath("/sys/class/net/eth" + str(num))
+    netdev_path = os.path.realpath(f"/sys/class/net/eth{num}")
     of_node_path = os.path.realpath(netdev_path + "/../../of_node")
 
     mac_path = of_node_path + "/local-mac-address"

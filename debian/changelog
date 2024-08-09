@@ -1,3 +1,9 @@
+wb-common (2.2.0) stable; urgency=medium
+
+  * Fix pylint, no functional changes
+
+ -- Nikolay Korotkiy <nikolay.korotkiy@wirenboard.com>  Tue, 23 Jul 2024 15:13:00 +0400
+
 wb-common (2.1.3) stable; urgency=medium
 
   * MQTT client wrapper: forward all constructor arguments to paho.mqtt.client.Client

@@ -6,7 +6,7 @@ import subprocess
 
 
 def gsm_decode(hexstr):
-    return os.popen("echo %s | xxd -r -ps | iconv -f=UTF-16BE -t=UTF-8" % hexstr).read()
+    return os.popen(f"echo {hexstr} | xxd -r -ps | iconv -f=UTF-16BE -t=UTF-8").read()
 
 
 def init_gsm():
@@ -23,7 +23,7 @@ def init_baudrate():
 
 def gsm_get_imei():
     proc = subprocess.Popen("wb-gsm imei", shell=True, stdout=subprocess.PIPE)
-    stdout, stderr = proc.communicate()
+    stdout, _stderr = proc.communicate()
     if proc.returncode != 0:
         raise RuntimeError("get imei failed")
 

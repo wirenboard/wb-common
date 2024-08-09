@@ -5,8 +5,8 @@ import os
 
 def get_fw_version():
     try:
-        return open("/etc/wb-fw-version").read().strip()
-    except:
+        return open("/etc/wb-fw-version", encoding="utf-8").read().strip()
+    except Exception:
         return None
 
 

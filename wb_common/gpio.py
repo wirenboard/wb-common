@@ -5,7 +5,7 @@ import threading
 from collections import defaultdict
 
 
-class GPIOHandler(object):
+class GPIOHandler:
     IN = "in"
     OUT = "out"
     RISING = "rising"
@@ -31,7 +31,7 @@ class GPIOHandler(object):
     def gpio_polling_thread(self):
         while True:
             events = self.epoll.poll()
-            for fileno, event in events:
+            for fileno, _event in events:
                 for gpio, fd in self.gpio_fds.items():
                     if fileno == fd.fileno():
                         if self.gpio_first_event_fired[gpio]:
@@ -43,17 +43,17 @@ class GPIOHandler(object):
                             self.gpio_first_event_fired[gpio] = True
 
     def export(self, gpio):
-        open("/sys/class/gpio/export", "wt").write("%d\n" % gpio)
+        open("/sys/class/gpio/export", mode="wt", encoding="ascii").write(f"{gpio}\n")
 
     def unexport(self, gpio):
-        open("/sys/class/gpio/unexport", "wt").write("%d\n" % gpio)
+        open("/sys/class/gpio/unexport", mode="wt", encoding="ascii").write(f"{gpio}\n")
 
     def setup(self, gpio, direction):
         self.export(gpio)
-        open("/sys/class/gpio/gpio%d/direction" % gpio, "wt").write("%s\n" % direction)
+        open(f"/sys/class/gpio/gpio{gpio}/direction", mode="wt", encoding="ascii").write(f"{direction}\n")
 
     def _open(self, gpio):
-        fd = open("/sys/class/gpio/gpio%d/value" % gpio, "r+")
+        fd = open(f"/sys/class/gpio/gpio{gpio}/value", mode="r+", encoding="ascii")
         self.gpio_fds[gpio] = fd
 
     def _check_open(self, gpio):
@@ -72,10 +72,10 @@ class GPIOHandler(object):
 
         self.gpio_fds[gpio].seek(0)
         val = self.gpio_fds[gpio].read().strip()
-        return False if val == "0" else True
+        return val != "0"
 
     def request_gpio_interrupt(self, gpio, edge):
-        open("/sys/class/gpio/gpio%d/edge" % gpio, "wt").write("%s\n" % edge)
+        open(f"/sys/class/gpio/gpio{gpio}/edge", mode="wt", encoding="ascii").write(f"{edge}\n")
         self._check_open(gpio)
 
     def add_event_detect(self, gpio, edge, callback):
