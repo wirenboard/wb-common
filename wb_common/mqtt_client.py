@@ -39,6 +39,8 @@ class MQTTClient(paho_socket.Client):
         if scheme == "unix":
             self.sock_connect(self._broker_url.path)
         elif scheme in ["mqtt-tcp", "tcp", "ws"]:
+            if not self._broker_url.port:
+                raise Exception("No port specified")
             self.connect(self._broker_url.hostname, self._broker_url.port)
         else:
             raise Exception("Unknown mqtt url scheme: " + scheme)
