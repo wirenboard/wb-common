@@ -1,3 +1,9 @@
+wb-common (2.2.1) stable; urgency=medium
+
+  * MQTT client wrapper: check if port specified
+
+ -- Nikolay Korotkiy <nikolay.korotkiy@wirenboard.com>  Thu, 05 Sep 2024 11:00:00 +0400
+
 wb-common (2.2.0) stable; urgency=medium
 
   * Fix pylint, no functional changes
