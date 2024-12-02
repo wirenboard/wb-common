@@ -10,9 +10,10 @@ class ADC:
         subprocess.call("killall -9 wb-homa-adc", shell=True)
 
     def set_scale(self, channel, scale):
-        open(
+        with open(
             f"/sys/bus/iio/devices/iio:device0/in_voltage{channel}_scale", mode="wt", encoding="ascii"
-        ).write(scale + "\n")
+        ) as file:
+            file.write(scale + "\n")
 
     def get_available_scales(self, channel):
         return (
@@ -42,9 +43,8 @@ class ADC:
     def read_phys_ch_value(self, channel):
         values = []
         for _ in range(self.N_SAMPLES):
-            v = int(
-                open(f"/sys/bus/iio/devices/iio:device0/in_voltage{channel}_raw", encoding="ascii").read()
-            )
+            with open(f"/sys/bus/iio/devices/iio:device0/in_voltage{channel}_raw", encoding="ascii") as file:
+                v = int(file.read())
             values.append(v)
             # ~ time.sleep(20)
         return 1.0 * sum(values) / len(values)

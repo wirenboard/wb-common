@@ -21,13 +21,14 @@ def init_baudrate():
         raise RuntimeError("gsm init baudrate failed")
 
 
-def gsm_get_imei():
-    proc = subprocess.Popen("wb-gsm imei", shell=True, stdout=subprocess.PIPE)
-    stdout, _stderr = proc.communicate()
-    if proc.returncode != 0:
-        raise RuntimeError("get imei failed")
-
-    return stdout.strip()
+def get_imei():
+    try:
+        result = subprocess.run(
+            "wb-gsm imei", shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError:
+        raise RuntimeError("get imei failed")  # pylint:disable=raise-missing-from
 
 
 def split_imei(imei):

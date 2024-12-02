@@ -18,7 +18,7 @@ def timing(f):
         ts = time.time()
         result = f(*args, **kw)
         te = time.time()
-        print("func:%r args:[%r, %r] took: %2.4f sec" % (f.__name__, args, kw, te - ts))
+        print(f"func:{f.__name__!r} args:[{args!r}, {kw!r}] took: {te - ts:.4f} sec")
         return result
 
     return wrap
@@ -30,8 +30,8 @@ class CellSpec:  # pylint: disable=too-few-public-methods
         self.error = error
 
 
-class MQTTConnection(mosquitto.Mosquitto):
-    def loop_forever(self, timeout=1.0, max_packets=1):
+class MQTTConnection(mosquitto.Mosquitto):  # pylint:disable=too-few-public-methods
+    def loop_forever(self, timeout=1.0, max_packets=1):  # pylint:disable=unused-argument
         mosquitto.Mosquitto.loop_forever(self, timeout=0.05)
 
 
@@ -141,7 +141,9 @@ class WBMQTT:
         self.watch_channel(device_id, control_id)
         return self.control_values[(device_id, control_id)].error
 
-    def get_next_value(self, device_id, control_id, timeout=10):
+    def get_next_value(  # pylint:disable=inconsistent-return-statements
+        self, device_id, control_id, timeout=10
+    ):
         self.watch_channel(device_id, control_id)
         cached_value = self.get_last_value(device_id, control_id)
         self.control_values[(device_id, control_id)].value = None
@@ -191,7 +193,9 @@ class WBMQTT:
     def send_value(self, device_id, control_id, new_value, retain=False):
         self.client.publish(f"/devices/{device_id}/controls/{control_id}/on", new_value, retain=retain)
 
-    def send_and_wait_for_value(self, device_id, control_id, new_value, retain=False, poll_interval=10e-3):
+    def send_and_wait_for_value(  # pylint:disable=too-many-arguments
+        self, device_id, control_id, new_value, retain=False, poll_interval=10e-3
+    ):
         """Sends the value to control/on topic,
         then waits until control topic is updated by the corresponding
         driver to the new value"""

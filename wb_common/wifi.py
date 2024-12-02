@@ -14,7 +14,7 @@ def get_wlan_mac():
     if ifaces:
         try:
             return open(f"/sys/class/net/{ifaces[0]}/address", encoding="ascii").read().strip()
-        except:
+        except:  # pylint:disable=bare-except
             return None
     else:
         return None

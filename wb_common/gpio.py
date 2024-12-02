@@ -29,7 +29,7 @@ class GPIOHandler:
         self.gpio_first_event_fired = defaultdict(lambda: False)
 
     def gpio_polling_thread(self):
-        while True:
+        while True:  # pylint:disable=too-many-nested-blocks
             events = self.epoll.poll()
             for fileno, _event in events:
                 for gpio, fd in self.gpio_fds.items():
@@ -43,17 +43,22 @@ class GPIOHandler:
                             self.gpio_first_event_fired[gpio] = True
 
     def export(self, gpio):
-        open("/sys/class/gpio/export", mode="wt", encoding="ascii").write(f"{gpio}\n")
+        with open("/sys/class/gpio/export", mode="wt", encoding="ascii") as file:
+            file.write(f"{gpio}\n")
 
     def unexport(self, gpio):
-        open("/sys/class/gpio/unexport", mode="wt", encoding="ascii").write(f"{gpio}\n")
+        with open("/sys/class/gpio/unexport", mode="wt", encoding="ascii") as file:
+            file.write(f"{gpio}\n")
 
     def setup(self, gpio, direction):
         self.export(gpio)
-        open(f"/sys/class/gpio/gpio{gpio}/direction", mode="wt", encoding="ascii").write(f"{direction}\n")
+        with open(f"/sys/class/gpio/gpio{gpio}/direction", mode="wt", encoding="ascii") as file:
+            file.write(f"{direction}\n")
 
     def _open(self, gpio):
-        fd = open(f"/sys/class/gpio/gpio{gpio}/value", mode="r+", encoding="ascii")
+        fd = open(  # pylint:disable=consider-using-with
+            f"/sys/class/gpio/gpio{gpio}/value", mode="r+", encoding="ascii"
+        )
         self.gpio_fds[gpio] = fd
 
     def _check_open(self, gpio):
@@ -75,7 +80,8 @@ class GPIOHandler:
         return val != "0"
 
     def request_gpio_interrupt(self, gpio, edge):
-        open(f"/sys/class/gpio/gpio{gpio}/edge", mode="wt", encoding="ascii").write(f"{edge}\n")
+        with open(f"/sys/class/gpio/gpio{gpio}/edge", mode="wt", encoding="ascii") as file:
+            file.write(f"{edge}\n")
         self._check_open(gpio)
 
     def add_event_detect(self, gpio, edge, callback):

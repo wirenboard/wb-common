@@ -6,7 +6,7 @@ import os
 def get_fw_version():
     try:
         return open("/etc/wb-fw-version", encoding="utf-8").read().strip()
-    except Exception:
+    except Exception:  # pylint:disable=broad-exception-caught
         return None
 
 
