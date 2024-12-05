@@ -10,18 +10,18 @@ class Beeper:
         self.pwm_dir = os.path.join(self.PWM_DIR_TEMPLATE, f"pwm{pwm_num}")
 
     def set(self, enabled):
-        open(os.path.join(self.pwm_dir, "enable"), mode="w", encoding="ascii").write(
-            ("1" if enabled else "0") + "\n"
-        )
+        with open(os.path.join(self.pwm_dir, "enable"), mode="w", encoding="ascii") as file:
+            file.write(("1" if enabled else "0") + "\n")
 
     def setup(self, period=250000, duty_cycle=125000):
         if not os.path.exists(self.pwm_dir):
-            open(os.path.join(self.PWM_DIR_TEMPLATE, "export"), mode="w", encoding="ascii").write(
-                f"{self.pwm_num}\n"
-            )
+            with open(os.path.join(self.PWM_DIR_TEMPLATE, "export"), mode="w", encoding="ascii") as file:
+                file.write(f"{self.pwm_num}\n")
         self.set(0)
-        open(os.path.join(self.pwm_dir, "period"), mode="w", encoding="ascii").write(f"{period}\n")
-        open(os.path.join(self.pwm_dir, "duty_cycle"), mode="w", encoding="ascii").write(f"{duty_cycle}\n")
+        with open(os.path.join(self.pwm_dir, "period"), mode="w", encoding="ascii") as file:
+            file.write(f"{period}\n")
+        with open(os.path.join(self.pwm_dir, "duty_cycle"), mode="w", encoding="ascii") as file:
+            file.write(f"{duty_cycle}\n")
 
     def beep(self, duration, repeat=1):
         try:  # To prevent from stucking in '1' state

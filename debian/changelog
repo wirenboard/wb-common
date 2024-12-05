@@ -1,3 +1,9 @@
+wb-common (2.2.3) stable; urgency=medium
+
+  * Enable angry pylint. No functional changes
+
+ -- Ekaterina Volkova <ekaterina.volkova@wirenboard.com>  Mon, 02 Dec 2024 18:03:14 +0300
+
 wb-common (2.2.2) stable; urgency=medium
 
   * Remove outdated wbmqtt library

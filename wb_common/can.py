@@ -28,14 +28,19 @@ class CanPort:
         subprocess.call(f"cansend {self.iface} {addr_str}#{data_str}", shell=True)
 
     def receive(self, timeout_ms=1000):
-        proc = subprocess.Popen(
-            f"candump {self.iface} -s0 -L -T {timeout_ms}", shell=True, stdout=subprocess.PIPE
-        )
-        stdout, _stderr = proc.communicate()
-        if proc.returncode != 0:
-            raise RuntimeError("candump failed")
 
-        stdout_str = stdout.strip()
+        try:
+            result = subprocess.run(
+                f"candump {self.iface} -s0 -L -T {timeout_ms}",
+                shell=True,
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError:
+            raise RuntimeError("candump failed")  # pylint:disable=raise-missing-from
+
+        stdout_str = result.stdout.strip()
         frames = []
         for line in stdout_str.split("\n"):
             line = line.strip()
