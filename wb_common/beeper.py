@@ -17,11 +17,11 @@ class Beeper:
         if not os.path.exists(self.pwm_dir):
             with open(os.path.join(self.PWM_DIR_TEMPLATE, "export"), mode="w", encoding="ascii") as file:
                 file.write(f"{self.pwm_num}\n")
-        self.set(0)
         with open(os.path.join(self.pwm_dir, "period"), mode="w", encoding="ascii") as file:
             file.write(f"{period}\n")
         with open(os.path.join(self.pwm_dir, "duty_cycle"), mode="w", encoding="ascii") as file:
             file.write(f"{duty_cycle}\n")
+        self.set(0)
 
     def beep(self, duration, repeat=1):
         try:  # To prevent from stucking in '1' state
