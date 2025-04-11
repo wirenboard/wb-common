@@ -21,7 +21,7 @@ def init_baudrate():
         raise RuntimeError("gsm init baudrate failed")
 
 
-def get_imei():
+def gsm_get_imei():
     try:
         result = subprocess.run(
             "wb-gsm imei", shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
