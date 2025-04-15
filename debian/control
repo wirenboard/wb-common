@@ -9,6 +9,6 @@ X-Python3-Version: >= 3.9
 
 Package: python3-wb-common
 Architecture: all
-Depends: python3, ${misc:Depends}, python3-paho-socket, busybox
+Depends: python3, ${misc:Depends}, python3-paho-mqtt, busybox
 Description: Wiren Board common library
  Wiren Board Python common library and helpers.

@@ -2,12 +2,12 @@ import random
 import string
 from urllib.parse import urlparse
 
-import paho_socket
+from paho.mqtt import client as _client
 
 DEFAULT_BROKER_URL = "unix:///var/run/mosquitto/mosquitto.sock"
 
 
-class MQTTClient(paho_socket.Client):
+class MQTTClient(_client.Client):
     def __init__(  # pylint:disable=keyword-arg-before-vararg
         self,
         client_id_prefix: str,
@@ -19,7 +19,8 @@ class MQTTClient(paho_socket.Client):
         self._broker_url = urlparse(broker_url)
         self._is_threaded = is_threaded
         kwargs["client_id"] = self.generate_client_id(client_id_prefix)
-        kwargs["transport"] = "websockets" if self._broker_url.scheme == "ws" else "tcp"
+        kwargs["transport"] = {"ws": "websockets", "unix": "unix"}.get(self._broker_url.scheme, "tcp")
+        kwargs["callback_api_version"] = _client.CallbackAPIVersion.VERSION1
         super().__init__(*args, **kwargs)
 
     @staticmethod
@@ -37,7 +38,7 @@ class MQTTClient(paho_socket.Client):
             self.ws_set_options(self._broker_url.path)
 
         if scheme == "unix":
-            self.sock_connect(self._broker_url.path)
+            self.connect(self._broker_url.path)
         elif scheme in ["mqtt-tcp", "tcp", "ws"]:
             if not self._broker_url.port:
                 raise Exception("No port specified")  # pylint:disable=broad-exception-raised
