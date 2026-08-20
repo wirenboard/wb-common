@@ -37,7 +37,7 @@ class CanPort:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-            )
+            )  # pylint: disable=duplicate-code
         except subprocess.CalledProcessError:
             raise RuntimeError("candump failed")  # pylint:disable=raise-missing-from
 
