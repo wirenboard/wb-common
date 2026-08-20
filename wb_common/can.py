@@ -19,7 +19,7 @@ class CanPort:
     def setup(self):
         # re-initialize iface
         subprocess.call(f"ifconfig {self.iface} down", shell=True)
-        subprocess.call(f"ip link set {self.iface} type can bitrate {self.bitrate}", shell=True)
+        subprocess.call(f"ip link set {self.iface} type can bitrate {int(self.bitrate)}", shell=True)
         subprocess.call(f"ifconfig {self.iface} up", shell=True)
 
     def send(self, addr, data):
