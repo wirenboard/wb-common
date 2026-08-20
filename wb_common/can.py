@@ -30,14 +30,15 @@ class CanPort:
     def receive(self, timeout_ms=1000):
 
         try:
+            # pylint: disable=duplicate-code
             result = subprocess.run(
                 f"candump {self.iface} -s0 -L -T {timeout_ms}",
                 shell=True,
                 check=True,
+                text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True,
-            )  # pylint: disable=duplicate-code
+            )
         except subprocess.CalledProcessError:
             raise RuntimeError("candump failed")  # pylint:disable=raise-missing-from
 
