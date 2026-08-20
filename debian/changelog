@@ -1,3 +1,12 @@
+wb-common (2.3.1) stable; urgency=medium
+
+  * can: fix corrupted payload in send(), hex data was sent as a bytes repr
+  * can: fix receive() always failing with TypeError on Python 3
+  * gsm: return IMEI as str, so split_imei() no longer rejects it
+  * gpio: fix wait_for_edge() raising OverflowError when called without timeout
+
+ -- Nikolay Korotkiy <nikolay.korotkiy@wirenboard.com>  Thu, 20 Aug 2026 16:20:00 +0400
+
 wb-common (2.3.0) stable; urgency=medium
 
   * Port for Debian 13
