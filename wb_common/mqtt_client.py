@@ -1,10 +1,15 @@
+import logging
 import random
 import string
+import time
 from urllib.parse import urlparse
 
 from paho.mqtt import client as _client
 
 DEFAULT_BROKER_URL = "unix:///var/run/mosquitto/mosquitto.sock"
+CONNECT_RETRY_INTERVAL_S = 1
+
+logger = logging.getLogger(__name__)
 
 
 class MQTTClient(_client.Client):
@@ -38,16 +43,37 @@ class MQTTClient(_client.Client):
             self.ws_set_options(self._broker_url.path)
 
         if scheme == "unix":
-            self.connect(self._broker_url.path)
+            host, port = self._broker_url.path, None
         elif scheme in ["mqtt-tcp", "tcp", "ws"]:
             if not self._broker_url.port:
                 raise Exception("No port specified")  # pylint:disable=broad-exception-raised
-            self.connect(self._broker_url.hostname, self._broker_url.port)
+            host, port = self._broker_url.hostname, self._broker_url.port
         else:
             raise Exception("Unknown mqtt url scheme: " + scheme)  # pylint:disable=broad-exception-raised
 
+        self._connect_forever(host, port)
+
         if self._is_threaded:
             self.loop_start()
+
+    def _connect_forever(self, host, port):
+        reported = False
+        while True:
+            try:
+                if port is None:
+                    self.connect(host)
+                else:
+                    self.connect(host, port)
+                break
+            except OSError as e:
+                if not reported:
+                    logger.warning(
+                        "MQTT broker %s is unreachable (%s), waiting for it", self._broker_url.geturl(), e
+                    )
+                    reported = True
+                time.sleep(CONNECT_RETRY_INTERVAL_S)
+        if reported:
+            logger.info("MQTT broker %s is up, connected", self._broker_url.geturl())
 
     def stop(self) -> None:
         if self._is_threaded:

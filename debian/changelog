@@ -1,3 +1,10 @@
+wb-common (2.4.0) stable; urgency=medium
+
+  * mqtt_client: retry initial broker connection forever (1 s interval)
+    instead of raising when the broker is unavailable at start
+
+ -- Ekaterina Volkova <ekaterina.volkova@wirenboard.com>  Thu, 20 Aug 2026 13:17:23 +0000
+
 wb-common (2.3.0) stable; urgency=medium
 
   * Port for Debian 13
