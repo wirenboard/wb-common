@@ -23,8 +23,14 @@ def init_baudrate():
 
 def gsm_get_imei():
     try:
+        # pylint: disable=duplicate-code
         result = subprocess.run(
-            "wb-gsm imei", shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            "wb-gsm imei",
+            shell=True,
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
         return result.stdout.strip()
     except subprocess.CalledProcessError:

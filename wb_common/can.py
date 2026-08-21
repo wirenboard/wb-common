@@ -19,21 +19,23 @@ class CanPort:
     def setup(self):
         # re-initialize iface
         subprocess.call(f"ifconfig {self.iface} down", shell=True)
-        subprocess.call(f"ip link set {self.iface} type can bitrate 125000", shell=True)
+        subprocess.call(f"ip link set {self.iface} type can bitrate {int(self.bitrate)}", shell=True)
         subprocess.call(f"ifconfig {self.iface} up", shell=True)
 
     def send(self, addr, data):
         addr_str = hex(addr)[2:][:3].zfill(3)
-        data_str = binascii.hexlify(data)
+        data_str = binascii.hexlify(data).decode("ascii")
         subprocess.call(f"cansend {self.iface} {addr_str}#{data_str}", shell=True)
 
     def receive(self, timeout_ms=1000):
 
         try:
+            # pylint: disable=duplicate-code
             result = subprocess.run(
                 f"candump {self.iface} -s0 -L -T {timeout_ms}",
                 shell=True,
                 check=True,
+                text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )

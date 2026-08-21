@@ -101,9 +101,6 @@ class GPIOHandler:
             self.epoll.unregister(self.gpio_fds[gpio])
 
     def wait_for_edge(self, gpio, edge, timeout=None):
-        if timeout is None:
-            timeout = 1e100
-
         event = threading.Event()
         event.clear()
 
