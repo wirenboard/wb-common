@@ -8,7 +8,9 @@ from wb_common.mqtt_client import MQTTClient
 def test_threaded_start_uses_nonblocking_connection():
     client = MQTTClient("test", "tcp://localhost:1883")
 
-    with patch.object(client, "connect_async") as connect_async, patch.object(client, "loop_start") as loop_start:
+    with patch.object(client, "connect_async") as connect_async, patch.object(
+        client, "loop_start"
+    ) as loop_start:
         client.start()
 
     connect_async.assert_called_once_with("localhost", 1883)
@@ -17,10 +19,12 @@ def test_threaded_start_uses_nonblocking_connection():
 
 def test_threaded_connection_failure_is_reported_once(caplog):
     client = MQTTClient("test", "tcp://localhost:1883")
+    callback = client.on_connect_fail
+    assert callback is not None
 
     with caplog.at_level(logging.WARNING, logger="wb_common.mqtt_client"):
-        client.on_connect_fail(client, None)
-        client.on_connect_fail(client, None)
+        callback(client, None)
+        callback(client, None)
 
     records = [record for record in caplog.records if record.name == "wb_common.mqtt_client"]
     assert len(records) == 1
