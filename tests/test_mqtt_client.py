@@ -47,3 +47,15 @@ def test_non_threaded_initial_connection_can_be_stopped():
         thread.join(2)
 
     assert not thread.is_alive()
+
+
+def test_threaded_stop_disconnects_before_stopping_loop():
+    client = MQTTClient("test", "tcp://localhost:1883")
+    calls = []
+
+    with patch.object(client, "disconnect", side_effect=lambda: calls.append("disconnect")), patch.object(
+        client, "loop_stop", side_effect=lambda: calls.append("loop_stop")
+    ):
+        client.stop()
+
+    assert calls == ["disconnect", "loop_stop"]

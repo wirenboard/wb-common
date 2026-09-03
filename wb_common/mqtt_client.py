@@ -96,6 +96,6 @@ class MQTTClient(_client.Client):
 
     def stop(self) -> None:
         self._stop_requested.set()
+        self.disconnect()
         if self._is_threaded:
             self.loop_stop()
-        self.disconnect()
