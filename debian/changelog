@@ -2,7 +2,6 @@ wb-common (2.4.0) stable; urgency=medium
 
   * mqtt_client: add start(retry_first_connection=True) so daemons wait for an unavailable broker
   * mqtt_client: add wait_for_connection(stop_requested) for daemons that publish from their own loop
-  * mqtt_client: add without_credentials() for services that log or report a broker URL
   * Require python3-paho-mqtt >= 2.1.0: the client pins CallbackAPIVersion and uses the unix transport, both from paho 2.x
 
  -- Ekaterina Volkova <ekaterina.volkova@wirenboard.com>  Thu, 17 Sep 2026 10:43:51 +0000

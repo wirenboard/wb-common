@@ -14,14 +14,13 @@ CONNECTION_POLL_INTERVAL_S = 0.1
 logger = logging.getLogger(__name__)
 
 
-def without_credentials(broker_url) -> str:
+def _without_credentials(broker_url) -> str:
     """
     The broker URL with the userinfo stripped.
 
     A broker URL may carry a password (wb-mqtt-welrok's config editor asks for
     tcp://user:password@host:1883), and everything logged here ends up in journald and in the
-    wb-diag-collect archives customers send to support. Also meant for services that log or
-    report a broker URL: they pass the urlparse() result and print what comes back.
+    wb-diag-collect archives customers send to support.
     """
     if broker_url.username:
         netloc = broker_url.hostname or ""
@@ -146,5 +145,5 @@ class MQTTClient(_client.Client):
 
     def _log_connect_failure(self, _client, _userdata) -> None:
         if not self._connect_failure_logged:
-            logger.warning("MQTT broker %s is unavailable, retrying", without_credentials(self._broker_url))
+            logger.warning("MQTT broker %s is unavailable, retrying", _without_credentials(self._broker_url))
             self._connect_failure_logged = True

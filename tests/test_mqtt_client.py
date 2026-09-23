@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 
 import pytest
 
-from wb_common.mqtt_client import MQTTClient, without_credentials
+from wb_common.mqtt_client import MQTTClient, _without_credentials
 
 
 def test_start_connects_synchronously_by_default():
@@ -142,5 +142,5 @@ def test_unthreaded_retry_is_interrupted_by_stop(caplog, broker_url, expected_lo
     ],
     ids=["with-port", "without-port", "no-credentials-is-kept-as-is", "unix-keeps-its-slashes"],
 )
-def test_without_credentials(broker_url, expected):
-    assert without_credentials(urlparse(broker_url)) == expected
+def test__without_credentials(broker_url, expected):
+    assert _without_credentials(urlparse(broker_url)) == expected
