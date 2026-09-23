@@ -2,13 +2,18 @@ Source: wb-common
 Maintainer: Wiren Board team <info@wirenboard.com>
 Section: python
 Priority: optional
-Build-Depends: debhelper-compat (= 13), dh-python, python3-all, python3-setuptools
+Build-Depends: debhelper-compat (= 13),
+               dh-python,
+               python3-all,
+               python3-paho-mqtt (>= 2.1.0~~),
+               python3-pytest,
+               python3-setuptools
 Standards-Version: 4.5.1
 Homepage: https://github.com/wirenboard/wb-common
 X-Python3-Version: >= 3.9
 
 Package: python3-wb-common
 Architecture: all
-Depends: python3, ${misc:Depends}, python3-paho-mqtt, busybox
+Depends: python3, ${misc:Depends}, python3-paho-mqtt (>= 2.1.0~~), busybox
 Description: Wiren Board common library
  Wiren Board Python common library and helpers.
