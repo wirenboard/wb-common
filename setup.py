@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from setuptools import find_packages, setup
+from setuptools import setup
 
 
 def get_version():
@@ -17,5 +17,5 @@ setup(
     description="Common Python library for Wiren Board",
     license="MIT",
     url="https://github.com/wirenboard/wb-common",
-    packages=find_packages(),
+    packages=["wb_common"],
 )
