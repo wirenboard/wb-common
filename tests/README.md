@@ -17,10 +17,12 @@ The Debian build runs the same suite through pybuild.
 | Test | Verifies |
 | --- | --- |
 | `test_start_connects_synchronously_by_default` | `start()` keeps the synchronous `connect()` + `loop_start()` sequence |
+| `test_start_without_a_network_thread_only_connects` | `is_threaded=False` keeps the synchronous `connect()` and starts no loop |
 | `test_start_raises_when_broker_unavailable_by_default` | one-shot callers still get an exception when the broker is down |
-| `test_threaded_retry_leaves_connecting_to_network_loop` | `retry_first_connection=True` uses `connect_async()` so paho's thread retries; tcp and unix URLs |
-| `test_unthreaded_retry_is_interrupted_by_stop` | non-threaded retry loop exits on `stop()`, logs the unavailable broker once and never the credentials from its URL |
+| `test_threaded_retry_leaves_connecting_to_network_loop` | `retry_first_connection=True` uses `connect_async()` so paho's thread retries; tcp passes host and port, unix only the socket path |
+| `test_unthreaded_retry_is_interrupted_by_stop` | non-threaded retry loop exits on `stop()`, logs the unavailable broker once and never the password from its URL |
 | `test_wait_for_connection_returns_once_connected` | returns True as soon as the broker accepts the connection |
 | `test_wait_for_connection_gives_up_on_the_daemon_stop_event` | a never-connecting client (rejected login) ends the wait with False on the daemon's own event |
 | `test_wait_for_connection_gives_up_on_stop` | `stop()` ends the wait with False |
 | `test_stop_stops_the_loop_before_disconnecting` | `stop()` calls `loop_stop()` before `disconnect()` |
+| `test__mask_password` | the logged URL keeps the username and masks the password, including one with `:` and `@` in it; URLs without a password are untouched |

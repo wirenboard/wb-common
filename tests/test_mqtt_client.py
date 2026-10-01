@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 
 import pytest
 
-from wb_common.mqtt_client import MQTTClient, _without_credentials
+from wb_common.mqtt_client import MQTTClient, _mask_password
 
 
 def test_start_connects_synchronously_by_default():
@@ -14,8 +14,18 @@ def test_start_connects_synchronously_by_default():
     with patch.object(client, "connect") as connect, patch.object(client, "loop_start") as loop_start:
         client.start()
 
-    connect.assert_called_once_with("localhost", 1883)
+    connect.assert_called_once_with(host="localhost", port=1883)
     loop_start.assert_called_once_with()
+
+
+def test_start_without_a_network_thread_only_connects():
+    client = MQTTClient("test", "tcp://localhost:1883", is_threaded=False)
+
+    with patch.object(client, "connect") as connect, patch.object(client, "loop_start") as loop_start:
+        client.start()
+
+    connect.assert_called_once_with(host="localhost", port=1883)
+    loop_start.assert_not_called()
 
 
 def test_start_raises_when_broker_unavailable_by_default():
@@ -32,9 +42,10 @@ def test_start_raises_when_broker_unavailable_by_default():
 @pytest.mark.parametrize(
     "broker_url, expected_target",
     [
-        ("tcp://localhost:1883", ("localhost", 1883)),
-        ("unix:///tmp/mosquitto.sock", ("/tmp/mosquitto.sock", 1883)),
+        ("tcp://localhost:1883", {"host": "localhost", "port": 1883}),
+        ("unix:///tmp/mosquitto.sock", {"host": "/tmp/mosquitto.sock"}),
     ],
+    ids=["tcp-passes-host-and-port", "unix-passes-the-socket-path-only"],
 )
 def test_threaded_retry_leaves_connecting_to_network_loop(broker_url, expected_target):
     client = MQTTClient("test", broker_url)
@@ -47,7 +58,7 @@ def test_threaded_retry_leaves_connecting_to_network_loop(broker_url, expected_t
         client.start(retry_first_connection=True)
 
     connect.assert_not_called()
-    connect_async.assert_called_once_with(*expected_target)
+    connect_async.assert_called_once_with(**expected_target)
     loop_start.assert_called_once_with()
 
 
@@ -104,16 +115,16 @@ def test_stop_stops_the_loop_before_disconnecting():
         ("tcp://localhost:1883", "MQTT broker tcp://localhost:1883 is unavailable, retrying"),
         (
             "tcp://user:s3cr3t@broker.example.com:1883",
-            "MQTT broker tcp://broker.example.com:1883 is unavailable, retrying",
+            "MQTT broker tcp://user:****@broker.example.com:1883 is unavailable, retrying",
         ),
     ],
-    ids=["plain-url", "credentials-are-kept-out-of-the-journal"],
+    ids=["plain-url", "the-password-is-kept-out-of-the-journal"],
 )
 def test_unthreaded_retry_is_interrupted_by_stop(caplog, broker_url, expected_log):
     client = MQTTClient("test", broker_url, is_threaded=False)
     connect_attempted = threading.Event()
 
-    def refuse(*_args):
+    def refuse(*_args, **_kwargs):
         connect_attempted.set()
         raise ConnectionRefusedError
 
@@ -135,12 +146,23 @@ def test_unthreaded_retry_is_interrupted_by_stop(caplog, broker_url, expected_lo
 @pytest.mark.parametrize(
     "broker_url, expected",
     [
-        ("tcp://user:s3cr3t@broker.example.com:1883", "tcp://broker.example.com:1883"),
-        ("tcp://user:s3cr3t@broker.example.com", "tcp://broker.example.com"),
+        ("tcp://user:s3cr3t@broker.example.com:1883", "tcp://user:****@broker.example.com:1883"),
+        ("tcp://user:s3cr3t@broker.example.com", "tcp://user:****@broker.example.com"),
+        ("tcp://user:p@ss:w0rd@broker.example.com:1883", "tcp://user:****@broker.example.com:1883"),
+        ("ws://user:s3cr3t@broker.example.com:8080/mqtt", "ws://user:****@broker.example.com:8080/mqtt"),
+        ("tcp://user@broker.example.com:1883", "tcp://user@broker.example.com:1883"),
         ("tcp://broker.example.com:1883", "tcp://broker.example.com:1883"),
         ("unix:///var/run/mosquitto/mosquitto.sock", "unix:///var/run/mosquitto/mosquitto.sock"),
     ],
-    ids=["with-port", "without-port", "no-credentials-is-kept-as-is", "unix-keeps-its-slashes"],
+    ids=[
+        "with-port",
+        "without-port",
+        "password-with-url-delimiters",
+        "ws-keeps-its-path",
+        "username-only-is-kept-as-is",
+        "no-credentials-is-kept-as-is",
+        "unix-is-kept-as-is",
+    ],
 )
-def test__without_credentials(broker_url, expected):
-    assert _without_credentials(urlparse(broker_url)) == expected
+def test__mask_password(broker_url, expected):
+    assert _mask_password(urlparse(broker_url)) == expected

@@ -14,23 +14,19 @@ CONNECTION_POLL_INTERVAL_S = 0.1
 logger = logging.getLogger(__name__)
 
 
-def _without_credentials(broker_url) -> str:
+def _mask_password(broker_url) -> str:
     """
-    The broker URL with the userinfo stripped.
+    The parsed broker URL back as a string with the password replaced by ****, for the journal.
 
     A broker URL may carry a password (wb-mqtt-welrok's config editor asks for
     tcp://user:password@host:1883), and everything logged here ends up in journald and in the
     wb-diag-collect archives customers send to support.
     """
-    if broker_url.username:
-        netloc = broker_url.hostname or ""
-        if broker_url.port is not None:
-            netloc = f"{netloc}:{broker_url.port}"
-        broker_url = broker_url._replace(netloc=netloc)
-    url = broker_url.geturl()
-    if broker_url.netloc or not broker_url.path.startswith("/"):
-        return url
-    return url.replace(":", "://", 1)  # geturl() drops the empty authority of unix:///path
+    netloc = broker_url.netloc
+    if broker_url.password:
+        netloc = netloc.replace(f":{broker_url.password}@", ":****@", 1)
+    # not geturl(): it writes unix:///path as unix:/path
+    return f"{broker_url.scheme}://{netloc}{broker_url.path}"
 
 
 class MQTTClient(_client.Client):
@@ -82,22 +78,22 @@ class MQTTClient(_client.Client):
             self.ws_set_options(self._broker_url.path)
 
         if scheme == "unix":
-            host, port = self._broker_url.path, 1883  # port is ignored by the unix transport
+            connect_args = {"host": self._broker_url.path}  # the unix transport takes the path, no port
         elif scheme in ["mqtt-tcp", "tcp", "ws"]:
             if not self._broker_url.port:
                 raise Exception("No port specified")  # pylint:disable=broad-exception-raised
-            host, port = self._broker_url.hostname, self._broker_url.port
+            connect_args = {"host": self._broker_url.hostname, "port": self._broker_url.port}
         else:
             raise Exception("Unknown mqtt url scheme: " + scheme)  # pylint:disable=broad-exception-raised
 
         if not retry_first_connection:
-            self.connect(host, port)
+            self.connect(**connect_args)
         elif self._is_threaded:
             # loop_start() runs loop_forever(retry_first_connection=True), so the network
             # thread keeps retrying the first connection and the caller is not blocked.
-            self.connect_async(host, port)
+            self.connect_async(**connect_args)
         else:
-            self._connect_until_stopped(host, port)
+            self._connect_until_stopped(**connect_args)
 
         if self._is_threaded:
             self.loop_start()
@@ -134,10 +130,10 @@ class MQTTClient(_client.Client):
                 self._stop_requested.wait(CONNECTION_POLL_INTERVAL_S)
         return self.is_connected()
 
-    def _connect_until_stopped(self, host: str, port: int) -> None:
+    def _connect_until_stopped(self, **connect_args) -> None:
         while not self._stop_requested.is_set():
             try:
-                self.connect(host, port)
+                self.connect(**connect_args)
                 return
             except OSError:
                 self._log_connect_failure(self, None)
@@ -145,5 +141,5 @@ class MQTTClient(_client.Client):
 
     def _log_connect_failure(self, _client, _userdata) -> None:
         if not self._connect_failure_logged:
-            logger.warning("MQTT broker %s is unavailable, retrying", _without_credentials(self._broker_url))
+            logger.warning("MQTT broker %s is unavailable, retrying", _mask_password(self._broker_url))
             self._connect_failure_logged = True
