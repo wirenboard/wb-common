@@ -78,6 +78,8 @@ class MQTTClient(_client.Client):
             self.ws_set_options(self._broker_url.path)
 
         if scheme == "unix":
+            if self._broker_url.netloc:
+                raise ValueError("Unix socket URL must be unix:///path/to/socket")
             connect_args = {"host": self._broker_url.path}  # the unix transport takes the path, no port
         elif scheme in ["mqtt-tcp", "tcp", "ws"]:
             if not self._broker_url.port:
