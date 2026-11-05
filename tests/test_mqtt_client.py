@@ -62,6 +62,27 @@ def test_threaded_retry_leaves_connecting_to_network_loop(broker_url, expected_t
     loop_start.assert_called_once_with()
 
 
+@pytest.mark.parametrize("retry_first_connection", [False, True], ids=["connect", "retry"])
+def test_start_rejects_a_unix_url_with_a_host(retry_first_connection):
+    """
+    unix://var/run/x.sock (two slashes) parses "var" as the host and /run/x.sock as the path:
+    start() refuses it instead of connecting to the wrong socket.
+    """
+    client = MQTTClient("test", "unix://var/run/mosquitto/mosquitto.sock")
+
+    with (
+        patch.object(client, "connect") as connect,
+        patch.object(client, "connect_async") as connect_async,
+        patch.object(client, "loop_start") as loop_start,
+        pytest.raises(ValueError),
+    ):
+        client.start(retry_first_connection=retry_first_connection)
+
+    connect.assert_not_called()
+    connect_async.assert_not_called()
+    loop_start.assert_not_called()
+
+
 def test_wait_for_connection_returns_once_connected():
     client = MQTTClient("test", "tcp://localhost:1883")
 
