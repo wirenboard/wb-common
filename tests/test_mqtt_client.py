@@ -187,3 +187,12 @@ def test_unthreaded_retry_is_interrupted_by_stop(caplog, broker_url, expected_lo
 )
 def test__mask_password(broker_url, expected):
     assert _mask_password(urlparse(broker_url)) == expected
+
+
+def test_importing_mqtt_client_disables_dnspython_doh():
+    features = pytest.importorskip("dns._features")
+    if not hasattr(features, "force"):
+        pytest.skip("dnspython without the _features switch")
+
+    # the module is imported at the top of this file, before dns.query
+    assert features.have("doh") is False
