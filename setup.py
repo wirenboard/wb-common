@@ -15,7 +15,7 @@ setup(
     maintainer="Wiren Board Team",
     maintainer_email="info@wirenboard.com",
     description="Common Python library for Wiren Board",
-    license="MIT",
+    license="MIT-WB",
     url="https://github.com/wirenboard/wb-common",
     packages=["wb_common"],
 )
